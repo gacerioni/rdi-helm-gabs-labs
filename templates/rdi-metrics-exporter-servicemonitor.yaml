@@ -1,0 +1,16 @@
+{{- if .Values.rdiMetricsExporter.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: rdi-metrics-exporter
+  labels:
+    app: rdi-metrics-exporter
+    release: prometheus
+spec:
+  endpoints:
+    - path: {{ .Values.rdiMetricsExporter.serviceMonitor.path }}
+      port: rdi-metrics
+  selector:
+    matchLabels:
+      app: rdi-metrics-exporter
+{{- end }}

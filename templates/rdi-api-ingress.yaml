@@ -1,0 +1,50 @@
+{{- if .Values.ingress.enabled -}}
+{{- $pathtype := "Prefix" -}}
+{{- $name := .Values.apiServer.service.name -}}
+{{- $port := .Values.apiServer.service.port -}}
+{{- $path := "/" -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name:  {{ $name }}
+  labels:
+    app:  {{ $name }}
+    product: rdi
+{{- with .Values.ingress.annotations }}
+  annotations:
+{{ toYaml . | indent 4 }}
+{{- end }}
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+    - secretName: rdi-api-ingress-tls
+  {{- end }}
+  rules:
+  {{- if .Values.ingress.hosts }}
+    {{- range .Values.ingress.hosts }}
+    - host: {{ . }}
+      http:
+        paths:
+        - path: {{ $path }}
+          pathType:  {{ $pathtype }}
+          backend:
+            service:
+              name: {{ $name }}
+              port:
+                number: {{ $port }}
+    {{- end }}
+  {{- else }}
+  - http:
+      paths:
+      - path: {{ $path }}
+        pathType:  {{ $pathtype }}
+        backend:
+          service:
+            name: {{ $name }}
+            port:
+              number: {{ $port }}
+  {{- end }}
+{{- end }}

@@ -1,0 +1,309 @@
+# Default RDI values in YAML format.
+# Variables to template configuration.
+
+global:
+  # Set this property when using a private image repository.
+  # Provide an array of image pull secrets.
+  # Example:
+  # imagePullSecrets:
+  #   - name: pullSecret1
+  #   - name: pullSecret2
+  imagePullSecrets:
+    - name: docker-config-jfrog
+
+  # DO NOT modify this value.
+  vmMode: false
+
+  # Indicates whether the deployment is intended for an OpenShift environment.
+  openShift: false
+
+  image:
+    # Overrides the image tag for all RDI components.
+    tag: 1.4.0
+
+    # If using a private repository, update the default values accordingly.
+    # Docker registry.
+    registry: docker.io
+
+    # Docker image repository.
+    repository: redis
+
+  # Configuration for the RDI ConfigMap.
+  rdiSysConfig:
+    # Log level for all RDI components. Valid options: DEBUG, INFO, ERROR.
+    # If specific component log levels are not set, this value will be used.
+    RDI_LOG_LEVEL: DEBUG
+
+    # Log level for the RDI API. Valid options: DEBUG, INFO, ERROR.
+    # If not set, RDI_LOG_LEVEL will be used.
+    # RDI_LOG_LEVEL_API: INFO
+
+    # Log level for the RDI Operator. Valid options: DEBUG, INFO, ERROR.
+    # If not set, RDI_LOG_LEVEL will be used.
+    # RDI_LOG_LEVEL_OPERATOR: INFO
+
+    # Log level for the RDI processor. Valid options: DEBUG, INFO, ERROR.
+    # If not set, RDI_LOG_LEVEL will be used.
+    # RDI_LOG_LEVEL_PROCESSOR: INFO
+
+    # Specifies whether the RDI is configured to use TLS.
+    RDI_REDIS_SSL: false
+
+    # RDI_IMAGE_REPO: redis
+
+    # This value must be set to the same tag as global.image.tag.
+    # RDI_IMAGE_TAG: ""
+
+    # If using a private repository, set this value to the same secret name as in global.imagePullSecrets.
+    # RDI_IMAGE_PULL_SECRET: []
+
+    # The service IP of the RDI database.
+    RDI_REDIS_HOST: "redis-12003.redis.platformengineer.io"
+
+    # The port for the RDI database.
+    RDI_REDIS_PORT: "12003"
+
+    # Enable authentication for the RDI API.
+    RDI_API_AUTH_ENABLED: "1"
+
+    # Specifies whether the API Collector should be deployed.
+    # RDI_API_COLLECTOR_ENABLED: "0"
+
+  # Configuration for the RDI Secret.
+  rdiSysSecret:
+    # Username and password for RDI database.
+    # If using the default password, keep the username as an empty string.
+    RDI_REDIS_USERNAME: ""
+    RDI_REDIS_PASSWORD: "secret42"
+
+    # Uncomment this property when using a TLS connection from RDI to its Redis database.
+    # DO NOT modify this value.
+    # RDI_REDIS_CACERT: /etc/certificates/rdi_db/cacert
+
+    # Uncomment these properties when using a TLS connection from RDI to its Redis database.
+    # DO NOT modify these values.
+    # RDI_REDIS_CERT: /etc/certificates/rdi_db/cert
+    # RDI_REDIS_KEY: /etc/certificates/rdi_db/key
+
+    # The passphrase used to get the private key stored in the secret store when using mTLS.
+    # RDI_REDIS_KEY_PASSPHRASE: ""
+
+    # The key used to encrypt the JWT token used by RDI API.
+    JWT_SECRET_KEY: "529f0ebb6eea716443b7c3cae0337a1ec0cf9bde9c3b5e09cfb36331ffb7b426"
+
+  rdiDbSSLSecret:
+    # Set to `true` when using a TLS connection from RDI to its Redis database.
+    enabled: false
+
+    # The content of the CA certificate PEM file.
+    # Uncomment and set this property when using a TLS connection from RDI to its Redis database.
+    # cacert: ""
+
+    # The content of the certificate PEM file.
+    # Uncomment and set this property when using a TLS connection from RDI to its Redis database.
+    # cert: ""
+
+    # The content of the private key PEM file.
+    # Uncomment and set this property when using a TLS connection from RDI to its Redis database.
+    # key: ""
+
+  # Container default security context.
+  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    allowPrivilegeEscalation: false
+
+# Set `isOpenshift` to `true` if deploying on OpenShift.
+reloader:
+  reloader:
+    isOpenshift: false
+    deployment:
+      containerSecurityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+      securityContext:
+        runAsUser: null
+
+# Configuration of the RDI Operator.
+operator:
+  image:
+    name: rdi-operator
+
+    # Specify an imagePullPolicy.
+    # ref: https://kubernetes.io/docs/concepts/containers/images/#pre-pulled-images
+    pullPolicy: IfNotPresent
+
+  # Extra optional options for liveness probe.
+  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+  liveness:
+    failureThreshold: 6
+    periodSeconds: 10
+
+  # Extra optional options for readiness probe.
+  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+  readiness:
+    failureThreshold: 6
+    periodSeconds: 30
+
+  # Extra optional options for startup probe.
+  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+  startup:
+    failureThreshold: 60
+    periodSeconds: 5
+
+fluentd:
+  image:
+    name: rdi-fluentd
+
+    # Specify an imagePullPolicy.
+    # ref: https://kubernetes.io/docs/concepts/containers/images/#pre-pulled-images
+    pullPolicy: IfNotPresent
+
+  rdiLogsHostPath: "/opt/rdi/logs"
+  podLogsHostPath: "/var/log/pods"
+  logrotateMinutes: "5"
+
+rdiMetricsExporter:
+  image:
+    name: rdi-monitor
+
+    # Specify an imagePullPolicy.
+    # ref: https://kubernetes.io/docs/concepts/containers/images/#pre-pulled-images
+    pullPolicy: IfNotPresent
+
+  # The RDI metrics service is set to ClusterIP, allowing access only from within the cluster.
+  # ref: http://kubernetes.io/docs/user-guide/services/
+  service:
+    protocol: TCP
+    port: 9121
+    targetPort: 9121
+    type: NodePort
+
+  # Configure extra options for liveness probe.
+  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
+  liveness:
+    failureThreshold: 6
+    periodSeconds: 10
+
+  # Configure extra options for readiness probe.
+  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
+  readiness:
+    failureThreshold: 6
+    periodSeconds: 30
+
+  # Configure extra options for startupProbe.
+  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
+  startup:
+    failureThreshold: 60
+    periodSeconds: 5
+
+  # Configuration for the ServiceMonitor, which is used to scrape metrics from the RDI metrics service.
+  serviceMonitor:
+    # Set to `true` to activate the ServiceMonitor.
+    enabled: false
+
+    # The endpoint from which Prometheus will scrape metrics.
+    path: /metrics
+
+# Configuration of the RDI API.
+apiServer:
+  image:
+    name: rdi-api
+
+    # Specify an imagePullPolicy.
+    # ref: https://kubernetes.io/docs/concepts/containers/images/#pre-pulled-images
+    pullPolicy: IfNotPresent
+
+  # The RDI API service is set to ClusterIP, allowing access only from within the cluster.
+  # ref: http://kubernetes.io/docs/user-guide/services/
+  service:
+    type: NodePort
+    name: rdi-api
+    port: 8080
+    targetPort: 8081
+    nodePort: 30287
+
+  # Configure extra options for liveness probe.
+  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
+  liveness:
+    failureThreshold: 6
+    periodSeconds: 10
+
+  # Configure extra options for readiness probe.
+  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
+  readiness:
+    failureThreshold: 6
+    periodSeconds: 30
+
+  # Configure extra options for startupProbe.
+  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
+  startup:
+    failureThreshold: 60
+    periodSeconds: 5
+
+# Expose the RDI API service to be accessed from outside the cluster.
+# ref: http://kubernetes.io/docs/user-guide/services/
+ingress:
+  # When `enabled` is set to `true`, Ingress will be created for RDI API server.
+  enabled: false
+
+  # ref: https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress
+  # className: ""
+
+  # Ingress resources configure routes based on the requested host.
+  # The optional Host field defines the hosts for routing. If omitted, it matches all hosts.
+  # Example:
+  # hosts:
+  #   - example.com
+  #   - another-example.com
+
+  # Annotations to be added to the IngressClass resource.
+  # Example:
+  # annotations:
+  #   kubernetes.io/ingress.class: "nginx"
+  #   nginx.ingress.kubernetes.io/rewrite-target: /
+
+  tls:
+    # Specifies whether the Ingress should be configured to use TLS.
+    enabled: false
+
+    # When `enabled` is set to `true`, set this property to the content of the crt file.
+    # crt: ""
+
+    # When `enabled` is set to `true`, set this property to the content of the key file.
+    # key: ""
+
+# This route configuration is relevant when the deployment is intended for an OpenShift environment.
+# Route exposes RDI API outside the cluster.
+route:
+  # When `enabled` is set to `true`, Route will be created for RDI API server.
+  enabled: false
+  tls:
+    # Specifies whether the Route should be configured to use TLS.
+    enabled: false
+
+    # When `enabled` is set to `true`, set this property to the content of the crt file.
+    # crt: ""
+
+    # When `enabled` is set to `true`, set this property to the content of the key file.
+    # key: ""
+
+collectorSourceMetricsExporter:
+  # The collector-source metrics service is set to ClusterIP, allowing access only from within the cluster.
+  # ref: http://kubernetes.io/docs/user-guide/services/
+  service:
+    type: NodePort
+    port: 9092
+    targetPort: 19000
+
+  # Configuration for the ServiceMonitor, which is used to scrape metrics from the collector-source metrics service.
+  serviceMonitor:
+    # Set to `true` to activate the ServiceMonitor.
+    enabled: false
+
+    # The endpoint from which Prometheus will scrape metrics.
+    path: /metrics

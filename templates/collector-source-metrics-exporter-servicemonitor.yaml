@@ -1,0 +1,16 @@
+{{- if .Values.collectorSourceMetricsExporter.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: collector-source-metrics-exporter
+  labels:
+    release: prometheus
+    app: collector-source-metrics-exporter
+spec:
+  endpoints:
+    - path: {{ .Values.collectorSourceMetricsExporter.serviceMonitor.path }}
+      port: collector-source-metrics
+  selector:
+    matchLabels:
+      app: collector-source-metrics-exporter
+{{- end }}

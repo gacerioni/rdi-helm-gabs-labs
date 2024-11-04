@@ -1,0 +1,9 @@
+global:
+  imagePullSecrets: []
+  vmMode: true
+
+ingress:
+  enabled: true
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+  className: traefik

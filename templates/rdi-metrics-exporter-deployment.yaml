@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rdi-metrics-exporter
+  labels:
+    app: rdi-metrics-exporter
+    product: rdi
+spec:
+  replicas: {{ .Values.rdiMetricsExporter.replicas }}
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: rdi-metrics-exporter
+      product: rdi
+  template:
+    metadata:
+      labels:
+        app: rdi-metrics-exporter
+        product: rdi
+      annotations:
+        configmap.reloader.stakater.com/reload: rdi-sys-config
+        secret.reloader.stakater.com/reload: rdi-sys-config, rdi-db-ssl-secret
+    spec:
+      terminationGracePeriodSeconds: 60
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: rdi-metrics-exporter
+          {{- include "securityContext" . | nindent 10 }}
+          image: "{{ .Values.global.image.registry }}/{{ .Values.global.image.repository }}/{{ .Values.rdiMetricsExporter.image.name }}:{{ or .Values.rdiMetricsExporter.image.tag .Values.global.image.tag }}"
+          imagePullPolicy: {{ .Values.rdiMetricsExporter.image.pullPolicy }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.rdiMetricsExporter.service.targetPort }}
+            periodSeconds: {{ .Values.rdiMetricsExporter.liveness.periodSeconds }}
+            failureThreshold: {{ .Values.rdiMetricsExporter.liveness.failureThreshold }}
+          readinessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.rdiMetricsExporter.service.targetPort }}
+            periodSeconds: {{ .Values.rdiMetricsExporter.readiness.periodSeconds }}
+            failureThreshold: {{ .Values.rdiMetricsExporter.readiness.failureThreshold }}
+          startupProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.rdiMetricsExporter.service.targetPort }}
+            periodSeconds: {{ .Values.rdiMetricsExporter.startup.periodSeconds }}
+            failureThreshold: {{ .Values.rdiMetricsExporter.startup.failureThreshold }}
+          volumeMounts:
+            - name: rdi-db-certificates
+              mountPath: /etc/certificates/rdi_db
+              readOnly: true
+          env:
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+          envFrom:
+            - configMapRef:
+                name: rdi-sys-config
+            - secretRef:
+                name: rdi-sys-config
+      volumes:
+        - name: rdi-db-certificates
+          secret:
+            secretName: rdi-db-ssl-secret
+            optional: true

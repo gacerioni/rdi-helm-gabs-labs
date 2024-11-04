@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rdi-operator
+  labels:
+    app: rdi-operator
+    product: rdi
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: rdi-operator
+      product: rdi
+  template:
+    metadata:
+      labels:
+        app: rdi-operator
+        product: rdi
+      annotations:
+        configmap.reloader.stakater.com/reload: rdi-sys-config
+        secret.reloader.stakater.com/reload: rdi-sys-config, rdi-db-ssl-secret
+    spec:
+      serviceAccountName: rdi-operator
+      terminationGracePeriodSeconds: 60
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: rdi-operator
+          {{- include "securityContext" . | nindent 10 }}
+          image: "{{ .Values.global.image.registry }}/{{ .Values.global.image.repository }}/{{ .Values.operator.image.name }}:{{ or .Values.operator.image.tag .Values.global.image.tag }}"
+          imagePullPolicy: {{ .Values.operator.image.pullPolicy }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            periodSeconds: {{ .Values.operator.liveness.periodSeconds }}
+            failureThreshold: {{ .Values.operator.liveness.failureThreshold }}
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8080
+            periodSeconds: {{ .Values.operator.readiness.periodSeconds }}
+            failureThreshold: {{ .Values.operator.readiness.failureThreshold }}
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            periodSeconds: {{ .Values.operator.startup.periodSeconds }}
+            failureThreshold: {{ .Values.operator.startup.failureThreshold }}
+          volumeMounts:
+            - name: rdi-db-certificates
+              mountPath: /etc/certificates/rdi_db
+              readOnly: true
+          env:
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: RDI_OPERATOR_POLL_INTERVAL
+              value: "1"
+            - name: RDI_OPERATOR_VM_MODE
+              value: "{{ int .Values.global.vmMode }}"
+          envFrom:
+            - configMapRef:
+                name: rdi-sys-config
+            - secretRef:
+                name: rdi-sys-config
+      volumes:
+        - name: rdi-db-certificates
+          secret:
+            secretName: rdi-db-ssl-secret
+            optional: true

@@ -1,0 +1,19 @@
+{{- if and .Values.global.openShift .Values.route.enabled }}
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: rdi-api
+  labels:
+    app: rdi-api
+    product: rdi
+spec:
+  port:
+    targetPort: {{ .Values.apiServer.service.targetPort }}
+  to:
+    kind: Service
+    name: rdi-api
+  {{- if .Values.route.tls.enabled }}
+  tls:
+    termination: edge
+  {{- end }}
+{{- end }}

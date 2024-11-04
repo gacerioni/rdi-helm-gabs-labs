@@ -1,0 +1,23 @@
+global:
+  imagePullSecrets: []
+
+  vmMode: true
+
+  rdiSysConfig:
+    RDI_LOG_LEVEL: DEBUG
+    RDI_REDIS_HOST: ${HOST_IP}
+    RDI_REDIS_PORT: "12005"
+    RDI_OPERATOR_VM_MODE: "0"
+    RDI_API_DEBUG_MODE: "0"
+    RDI_API_AUTH_ENABLED: "0"
+    RDI_API_COLLECTOR_ENABLED: "1"
+
+  rdiSysSecret:
+    RDI_REDIS_USERNAME: ""
+    RDI_REDIS_PASSWORD: ""
+
+ingress:
+  enabled: true
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+  className: traefik

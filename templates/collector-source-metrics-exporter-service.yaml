@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: collector-source-metrics-exporter
+  labels:
+    app: collector-source-metrics-exporter
+    product: rdi
+spec:
+  type: {{ .Values.collectorSourceMetricsExporter.service.type }}
+  selector:
+    app: collector-source
+  ports:
+    - protocol: TCP
+      name: collector-source-metrics
+      port: {{ .Values.collectorSourceMetricsExporter.service.port }}
+      targetPort: {{ .Values.collectorSourceMetricsExporter.service.targetPort }}

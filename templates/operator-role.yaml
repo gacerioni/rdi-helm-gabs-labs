@@ -1,0 +1,63 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: rdi-operator
+  labels:
+    app: rdi-operator
+    product: rdi
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+      - services
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+    verbs:
+      - create
+      - delete
+      - get
+      - update
+      - list
+      - status
+  - apiGroups:
+      - apps
+    resources:
+      - deployments/scale
+    verbs:
+      - patch
+      - update
+      - get
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - delete
+      - update
+      - list
+      - get
+  - apiGroups:
+      - ""
+    resources:
+      - services
+    verbs:
+      - get
+  - apiGroups:
+    - secrets-store.csi.x-k8s.io
+    resources:
+    - secretproviderclasses
+    verbs:
+    - create
+    - delete
+    - get
+    - patch

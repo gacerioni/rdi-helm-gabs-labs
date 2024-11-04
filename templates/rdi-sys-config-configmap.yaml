@@ -1,0 +1,12 @@
+{{- if .Values.global.rdiSysConfig }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rdi-sys-config
+  labels:
+    product: rdi
+data:
+  {{- range $innerKey, $val := .Values.global.rdiSysConfig }}
+    {{ $innerKey }}: {{ $val | quote }}
+  {{- end }}
+{{- end }}

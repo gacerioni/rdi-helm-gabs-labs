@@ -1,0 +1,24 @@
+{{- if .Values.global.vmMode }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rdi-metrics-exporter
+  labels:
+    app: rdi-metrics-exporter
+    product: rdi
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: traefik
+  rules:
+    - http:
+        paths:
+          - path: /metrics/rdi
+            pathType: Prefix
+            backend:
+              service:
+                name: rdi-metrics-exporter
+                port:
+                  number: {{ .Values.rdiMetricsExporter.service.port }}
+{{- end }}
